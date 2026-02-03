@@ -1,8 +1,8 @@
 import Link from "next/link";
+import Image from "next/image";
 import { Eye, Heart, Copy, ArrowRight } from "lucide-react";
 import { getFeaturedPrompts } from "@/lib/data";
 import { formatNumber, truncateText } from "@/lib/utils";
-import { DifficultyLabels } from "@/types";
 
 export default function FeaturedPrompts() {
   const featuredPrompts = getFeaturedPrompts();
@@ -37,9 +37,6 @@ export default function FeaturedPrompts() {
               <div className="flex items-center justify-between mb-4">
                 <span className="badge-primary text-xs">
                   {prompt.categoryName}
-                </span>
-                <span className="badge-secondary text-xs">
-                  {DifficultyLabels[prompt.difficulty]}
                 </span>
               </div>
 
@@ -82,9 +79,11 @@ export default function FeaturedPrompts() {
                   </span>
                 </div>
                 <div className="flex items-center">
-                  <img
+                  <Image
                     src={prompt.authorAvatar}
                     alt={prompt.author}
+                    width={24}
+                    height={24}
                     className="w-6 h-6 rounded-full"
                   />
                 </div>

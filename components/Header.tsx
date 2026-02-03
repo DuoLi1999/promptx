@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -15,10 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navigation = [
-  { name: "浏览提示词", href: "/prompts" },
-  { name: "关于", href: "/about" },
-];
+const navigation = [{ name: "浏览提示词", href: "/prompts" }];
 
 export default function Header() {
   const router = useRouter();
@@ -107,12 +105,14 @@ export default function Header() {
                     onClick={() => setUserMenuOpen(!userMenuOpen)}
                     className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 transition-colors"
                   >
-                    <img
+                    <Image
                       src={
                         user?.avatar ||
                         "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
                       }
                       alt={user?.name || "用户"}
+                      width={32}
+                      height={32}
                       className="w-8 h-8 rounded-full border border-gray-200"
                     />
                     <ChevronDown className="w-4 h-4 text-gray-500" />
@@ -237,9 +237,14 @@ export default function Header() {
               {isLoggedIn ? (
                 <>
                   <div className="px-4 py-3 flex items-center gap-3">
-                    <img
-                      src={user?.avatar}
-                      alt={user?.name}
+                    <Image
+                      src={
+                        user?.avatar ||
+                        "https://api.dicebear.com/7.x/avataaars/svg?seed=default"
+                      }
+                      alt={user?.name || "用户"}
+                      width={40}
+                      height={40}
                       className="w-10 h-10 rounded-full"
                     />
                     <div>

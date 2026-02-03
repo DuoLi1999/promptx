@@ -23,6 +23,7 @@ import {
   Globe,
 } from "lucide-react";
 import { categories } from "@/lib/categories";
+import { mockPrompts } from "@/lib/data";
 
 // 图标映射
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -49,6 +50,12 @@ const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Globe,
 };
 
+// 统计每个分类的实际提示词数量
+function getCategoryPromptCount(categoryId: string): number {
+  return mockPrompts.filter((prompt) => prompt.categoryId === categoryId)
+    .length;
+}
+
 export default function Categories() {
   // 只展示前12个主要分类
   const displayCategories = categories.slice(0, 12);
@@ -68,6 +75,7 @@ export default function Categories() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
           {displayCategories.map((category) => {
             const IconComponent = iconMap[category.icon] || Briefcase;
+            const actualCount = getCategoryPromptCount(category.id);
             return (
               <Link
                 key={category.id}
@@ -82,9 +90,7 @@ export default function Categories() {
                 <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">
                   {category.name}
                 </h3>
-                <p className="text-sm text-gray-500">
-                  {category.promptCount} 个提示词
-                </p>
+                <p className="text-sm text-gray-500">{actualCount} 个提示词</p>
               </Link>
             );
           })}

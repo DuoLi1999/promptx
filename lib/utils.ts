@@ -30,6 +30,9 @@ export function truncateText(text: string, maxLength: number): string {
 
 // 生成唯一ID
 export function generateId(): string {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
   return Math.random().toString(36).substring(2, 9);
 }
 

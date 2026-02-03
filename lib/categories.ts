@@ -1333,3 +1333,22 @@ export function getCategoryBySlug(slug: string): Category | undefined {
 export function getAllSubcategories() {
   return categories.flatMap((c) => c.subcategories);
 }
+
+// 更新分类的提示词数量（基于实际数据）
+export function updateCategoryPromptCounts(prompts: any[]) {
+  const countMap = new Map<string, number>();
+
+  // 统计每个分类的提示词数量
+  prompts.forEach((prompt) => {
+    const categoryId = prompt.categoryId;
+    countMap.set(categoryId, (countMap.get(categoryId) || 0) + 1);
+  });
+
+  // 更新分类的 promptCount
+  categories.forEach((category) => {
+    const count = countMap.get(category.id) || 0;
+    category.promptCount = count;
+  });
+
+  return categories;
+}

@@ -18,6 +18,11 @@ import {
 
 const FAVORITES_STORAGE_KEY = "promptx_favorites";
 
+function getFavoritesStorageKey(userId?: number) {
+  if (!userId) return FAVORITES_STORAGE_KEY;
+  return `${FAVORITES_STORAGE_KEY}_${userId}`;
+}
+
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
@@ -47,7 +52,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoggedIn(true);
 
       // 加载收藏列表
-      const savedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      const favoritesKey = getFavoritesStorageKey(currentUser?.id);
+      const savedFavorites = localStorage.getItem(favoritesKey);
       if (savedFavorites) {
         try {
           setFavorites(JSON.parse(savedFavorites));
@@ -65,7 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoggedIn(true);
 
       // 加载收藏列表
-      const savedFavorites = localStorage.getItem(FAVORITES_STORAGE_KEY);
+      const favoritesKey = getFavoritesStorageKey(result.user.id);
+      const savedFavorites = localStorage.getItem(favoritesKey);
       if (savedFavorites) {
         try {
           setFavorites(JSON.parse(savedFavorites));
@@ -94,7 +101,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         ? prev.filter((id) => id !== promptId)
         : [...prev, promptId];
 
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(newFavorites));
+      const favoritesKey = getFavoritesStorageKey(user?.id);
+      localStorage.setItem(favoritesKey, JSON.stringify(newFavorites));
       return newFavorites;
     });
   };

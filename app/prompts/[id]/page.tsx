@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import {
   Eye,
   Copy,
@@ -140,7 +141,7 @@ export default function PromptDetailPage() {
           </Link>
           <ChevronRight className="w-4 h-4 text-gray-400" />
           <Link
-            href={`/prompts?category=${prompt.categoryName}`}
+            href={`/prompts?category=${prompt.categoryId}`}
             className="text-gray-500 hover:text-primary-600"
           >
             {prompt.categoryName}
@@ -312,9 +313,11 @@ export default function PromptDetailPage() {
             <div className="card p-6">
               <h3 className="font-bold text-gray-900 mb-4">创作者</h3>
               <div className="flex items-center space-x-4">
-                <img
+                <Image
                   src={prompt.authorAvatar}
                   alt={prompt.author}
+                  width={56}
+                  height={56}
                   className="w-14 h-14 rounded-full"
                 />
                 <div>

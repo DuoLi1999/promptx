@@ -29,6 +29,7 @@ export interface Prompt {
   categoryName: string;
   subcategoryId?: string;
   subcategoryName?: string;
+  taskType: TaskType;
 
   // 元数据
   outputType: string; // 输出物类型：综述提纲、逐字稿、SQL等
@@ -85,6 +86,7 @@ export interface UserProfile extends User {
 export interface FilterOptions {
   category?: string;
   subcategory?: string;
+  taskType?: TaskType;
   outputType?: string;
   targetTool?: string;
   difficulty?: string;
@@ -98,6 +100,16 @@ export const DifficultyLabels: Record<string, string> = {
   intermediate: "进阶",
   advanced: "专家",
 };
+
+export type TaskType = "text" | "image" | "code" | "data" | "video";
+
+export const TaskTypeOptions: Array<{ id: TaskType; label: string }> = [
+  { id: "text", label: "文生文" },
+  { id: "image", label: "文生图" },
+  { id: "code", label: "文生代码" },
+  { id: "data", label: "数据/分析" },
+  { id: "video", label: "视频/脚本" },
+];
 
 // 工具选项 - 包含国内外主流AI工具
 export const ToolOptions = [

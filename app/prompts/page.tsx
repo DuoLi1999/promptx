@@ -1,32 +1,79 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
-import { Search, Filter, Eye, Copy, Heart, X, User } from "lucide-react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import { Search, Eye, Copy, Heart, X } from "lucide-react";
 import { mockPrompts } from "@/lib/data";
 import { categories } from "@/lib/categories";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
+import { TaskTypeOptions, ToolOptions } from "@/types";
 
 export default function PromptsPage() {
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
-  const { isFavorited } = useAuth();
+  const { isFavorited, toggleFavorite, isLoggedIn } = useAuth();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     searchParams.get("category") || null,
   );
   const [selectedSubcategory, setSelectedSubcategory] = useState<string | null>(
-    null,
+    searchParams.get("subcategory") || null,
   );
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("q") || "");
-  const [selectedTools, setSelectedTools] = useState<string[]>([]);
-  const [showFilters, setShowFilters] = useState(false);
+  const [selectedTaskType, setSelectedTaskType] = useState<string | null>(
+    searchParams.get("taskType") || null,
+  );
+  const [selectedTools, setSelectedTools] = useState<string[]>(
+    searchParams.get("tools")?.split(",").filter(Boolean) || [],
+  );
 
   const selectedCategoryData = categories.find(
     (c) => c.id === selectedCategory,
   );
   const subcategories = selectedCategoryData?.subcategories || [];
+  const selectedTaskTypeLabel =
+    TaskTypeOptions.find((type) => type.id === selectedTaskType)?.label || "";
+
+  useEffect(() => {
+    const nextCategory = searchParams.get("category") || null;
+    const nextSubcategory = searchParams.get("subcategory") || null;
+    const nextTaskType = searchParams.get("taskType") || null;
+    const nextTools =
+      searchParams.get("tools")?.split(",").filter(Boolean) || [];
+
+    setSelectedCategory(nextCategory);
+    setSelectedSubcategory(nextSubcategory);
+    setSelectedTaskType(nextTaskType);
+    setSelectedTools(nextTools);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedCategory) params.set("category", selectedCategory);
+    if (selectedSubcategory) params.set("subcategory", selectedSubcategory);
+    if (selectedTaskType) params.set("taskType", selectedTaskType);
+    if (selectedTools.length > 0) params.set("tools", selectedTools.join(","));
+
+    const nextQuery = params.toString();
+    const currentQuery = searchParams.toString();
+    if (nextQuery !== currentQuery) {
+      router.replace(`${pathname}${nextQuery ? `?${nextQuery}` : ""}`, {
+        scroll: false,
+      });
+    }
+  }, [
+    pathname,
+    router,
+    searchParams,
+    selectedCategory,
+    selectedSubcategory,
+    selectedTaskType,
+    selectedTools,
+  ]);
 
   const filteredPrompts = useMemo(() => {
     return mockPrompts.filter((prompt) => {
@@ -38,25 +85,20 @@ export default function PromptsPage() {
         return false;
       }
 
-      if (searchQuery.trim()) {
-        const query = searchQuery.toLowerCase();
-        return (
-          prompt.title.toLowerCase().includes(query) ||
-          prompt.description.toLowerCase().includes(query)
-        );
+      if (selectedTaskType && prompt.taskType !== selectedTaskType) {
+        return false;
       }
 
-      if (selectedTools.length > 0) {
-        return selectedTools.includes(prompt.targetTool);
+      if (
+        selectedTools.length > 0 &&
+        !selectedTools.includes(prompt.targetTool)
+      ) {
+        return false;
       }
 
       return true;
     });
-  }, [selectedCategory, selectedSubcategory, searchQuery, selectedTools]);
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-  };
+  }, [selectedCategory, selectedSubcategory, selectedTaskType, selectedTools]);
 
   const toggleTool = (tool: string) => {
     setSelectedTools((prev) =>
@@ -64,51 +106,44 @@ export default function PromptsPage() {
     );
   };
 
+  const handleFavoriteClick = (
+    e: React.MouseEvent<HTMLButtonElement>,
+    promptId: number,
+  ) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+    toggleFavorite(promptId);
+  };
+
   const clearFilters = () => {
     setSelectedCategory(null);
     setSelectedSubcategory(null);
-    setSearchQuery("");
+    setSelectedTaskType(null);
     setSelectedTools([]);
   };
 
-  const allTools = Array.from(
-    new Set(mockPrompts.map((p) => p.targetTool)),
-  ).sort();
+  const allTools = ToolOptions;
 
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="bg-white border-b border-gray-100 sticky top-16 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <form onSubmit={handleSearch} className="flex gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="搜索提示词..."
-                className="w-full pl-9 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"
-            >
-              <Filter className="w-4 h-4" />
-              <span>筛选</span>
-            </button>
-          </form>
-        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4" />
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           <aside className="lg:col-span-1">
-            <div className="card p-4 sticky top-40">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">分类</h3>
-                {selectedCategory && (
+            <div className="card p-4 sticky top-40 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-gray-900">筛选</h3>
+                {(selectedCategory ||
+                  selectedSubcategory ||
+                  selectedTaskType ||
+                  selectedTools.length > 0) && (
                   <button
                     onClick={clearFilters}
                     className="text-xs text-primary-600 hover:text-primary-700"
@@ -118,31 +153,107 @@ export default function PromptsPage() {
                 )}
               </div>
 
-              <div className="space-y-1">
-                <button
-                  onClick={() => setSelectedCategory(null)}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                    selectedCategory === null
-                      ? "bg-primary-100 text-primary-600 font-medium"
-                      : "text-gray-600 hover:bg-gray-50"
-                  }`}
-                >
-                  全部分类
-                </button>
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    任务类型
+                  </h4>
+                  {selectedTaskType ? (
+                    <button
+                      onClick={() => setSelectedTaskType(null)}
+                      className="text-xs text-gray-400 hover:text-gray-600"
+                    >
+                      清除
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400">单选</span>
+                  )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  {TaskTypeOptions.map((type) => (
+                    <button
+                      key={type.id}
+                      onClick={() =>
+                        setSelectedTaskType(
+                          selectedTaskType === type.id ? null : type.id,
+                        )
+                      }
+                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedTaskType === type.id
+                          ? "bg-primary-600 text-white"
+                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                      }`}
+                    >
+                      {type.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-                {categories.map((category) => (
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900">分类</h4>
+                  <span className="text-xs text-gray-400">可滚动</span>
+                </div>
+                <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
                   <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
+                    onClick={() => {
+                      setSelectedCategory(null);
+                      setSelectedSubcategory(null);
+                    }}
                     className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
-                      selectedCategory === category.id
+                      selectedCategory === null
                         ? "bg-primary-100 text-primary-600 font-medium"
                         : "text-gray-600 hover:bg-gray-50"
                     }`}
                   >
-                    {category.name}
+                    全部分类
                   </button>
-                ))}
+
+                  {categories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        setSelectedCategory(category.id);
+                        setSelectedSubcategory(null);
+                      }}
+                      className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-colors ${
+                        selectedCategory === category.id
+                          ? "bg-primary-100 text-primary-600 font-medium"
+                          : "text-gray-600 hover:bg-gray-50"
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-3">
+                  <h4 className="text-sm font-semibold text-gray-900">
+                    模型选择
+                  </h4>
+                  <span className="text-xs text-gray-400">
+                    {selectedTools.length} 已选
+                  </span>
+                </div>
+                <div className="max-h-64 overflow-y-auto pr-1 space-y-2">
+                  {allTools.map((tool) => (
+                    <label
+                      key={tool}
+                      className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={selectedTools.includes(tool)}
+                        onChange={() => toggleTool(tool)}
+                        className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                      <span>{tool}</span>
+                    </label>
+                  ))}
+                </div>
               </div>
             </div>
           </aside>
@@ -179,8 +290,19 @@ export default function PromptsPage() {
               </div>
             </div>
 
-            {selectedTools.length > 0 && (
+            {(selectedTaskType || selectedTools.length > 0) && (
               <div className="mb-6 flex flex-wrap gap-2">
+                {selectedTaskType && (
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-sm bg-gray-200 text-gray-700">
+                    <span>{selectedTaskTypeLabel}</span>
+                    <button
+                      onClick={() => setSelectedTaskType(null)}
+                      className="hover:text-gray-900"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                )}
                 {selectedTools.map((tool) => (
                   <div
                     key={tool}
@@ -195,27 +317,6 @@ export default function PromptsPage() {
                     </button>
                   </div>
                 ))}
-              </div>
-            )}
-
-            {showFilters && (
-              <div className="mb-6 card p-4 bg-white">
-                <h4 className="font-semibold text-gray-900 mb-3">按工具筛选</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                  {allTools.map((tool) => (
-                    <button
-                      key={tool}
-                      onClick={() => toggleTool(tool)}
-                      className={`px-3 py-2 rounded-lg text-sm transition-colors ${
-                        selectedTools.includes(tool)
-                          ? "bg-primary-600 text-white"
-                          : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                      }`}
-                    >
-                      {tool}
-                    </button>
-                  ))}
-                </div>
               </div>
             )}
 
@@ -238,13 +339,22 @@ export default function PromptsPage() {
                           </span>
                         )}
                       </div>
-                      <Heart
-                        className={`w-4 h-4 transition-colors ${
+                      <button
+                        type="button"
+                        aria-label={isFavorited(prompt.id) ? "取消收藏" : "收藏"}
+                        onClick={(e) => handleFavoriteClick(e, prompt.id)}
+                        className={`p-1 rounded-full transition-colors ${
                           isFavorited(prompt.id)
-                            ? "text-red-500 fill-current"
-                            : "text-gray-300"
+                            ? "text-red-500"
+                            : "text-gray-300 hover:text-gray-400"
                         }`}
-                      />
+                      >
+                        <Heart
+                          className={`w-4 h-4 transition-colors ${
+                            isFavorited(prompt.id) ? "fill-current" : ""
+                          }`}
+                        />
+                      </button>
                     </div>
 
                     <h3 className="font-bold text-lg text-gray-900 mb-2 group-hover:text-primary-600 transition-colors line-clamp-2">
@@ -275,10 +385,15 @@ export default function PromptsPage() {
                           <Heart className="w-4 h-4" />
                           <span>{formatNumber(prompt.favoriteCount)}</span>
                         </span>
-                        <span className="flex items-center space-x-1">
-                          <User className="w-4 h-4" />
-                          <span>{prompt.author}</span>
-                        </span>
+                      </div>
+                      <div className="flex items-center">
+                        <Image
+                          src={prompt.authorAvatar}
+                          alt={prompt.author}
+                          width={24}
+                          height={24}
+                          className="w-6 h-6 rounded-full"
+                        />
                       </div>
                     </div>
                   </Link>
@@ -290,7 +405,7 @@ export default function PromptsPage() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-2">
                   未找到提示词
                 </h3>
-                <p className="text-gray-600">尝试调整搜索条件或浏览其他分类</p>
+                <p className="text-gray-600">尝试调整筛选条件或浏览其他分类</p>
               </div>
             )}
           </main>
