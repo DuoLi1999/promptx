@@ -48,11 +48,11 @@ export default function Header() {
             href="/"
             className="flex items-center space-x-2 group flex-shrink-0"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-700 rounded-lg flex items-center justify-center shadow-md shadow-primary-500/20 group-hover:shadow-primary-500/30 transition-shadow">
+            <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-purple-500 rounded-lg flex items-center justify-center shadow-md shadow-primary-500/20 group-hover:shadow-primary-500/30 transition-shadow">
               <Sparkles className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-bold text-gray-900 hidden sm:block">
-              Prompt<span className="text-primary-600">X</span>
+              Prompt<span className="bg-gradient-to-r from-primary-500 to-purple-600 bg-clip-text text-transparent">X</span>
             </span>
           </Link>
 

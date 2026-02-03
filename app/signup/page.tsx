@@ -1,28 +1,48 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Sparkles, Eye, EyeOff, Check } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function SignupPage() {
+  const router = useRouter();
+  const { register, isLoggedIn, isLoading: authLoading } = useAuth();
+
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+
+  // 如果已登录，跳转到首页
+  useEffect(() => {
+    if (!authLoading && isLoggedIn) {
+      router.push("/");
+    }
+  }, [isLoggedIn, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedToTerms) {
-      alert("请先同意服务条款和隐私政策");
+      setError("请先同意服务条款和隐私政策");
       return;
     }
     setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-      alert("注册功能演示 - 实际部署需要后端支持");
-    }, 1000);
+    setError("");
+
+    const result = await register(email, password, name);
+
+    if (result.success) {
+      router.push("/");
+    } else {
+      setError(result.error || "注册失败");
+    }
+
+    setIsLoading(false);
   };
 
   // 密码强度检查
@@ -160,6 +180,13 @@ export default function SignupPage() {
                 </Link>
               </label>
             </div>
+
+            {/* Error */}
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-4">
+                <p className="text-sm text-red-600">{error}</p>
+              </div>
+            )}
 
             {/* Submit */}
             <button

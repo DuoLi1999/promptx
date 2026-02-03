@@ -1,0 +1,103 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  password     String
+  name         String
+  avatar       String?
+  bio          String?
+  promptCount  Int       @default(0)
+  followers    Int       @default(0)
+  following    Int       @default(0)
+  prompts      Prompt[]
+  favorites    Favorite[]
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([email])
+}
+
+model Prompt {
+  id              String    @id @default(cuid())
+  title           String
+  description     String
+  content         String
+  categoryId      String
+  categoryName    String
+  subcategoryId   String?
+  subcategoryName String?
+  taskType        String
+  targetTool      String
+  difficulty      String
+  authorId        String
+  authorName      String
+  authorAvatar    String
+  viewCount       Int       @default(0)
+  favoriteCount   Int       @default(0)
+  copyCount       Int       @default(0)
+  rating          Float     @default(0)
+  reviewCount     Int       @default(0)
+  tags            String
+  isFeatured      Boolean   @default(false)
+  isTrending      Boolean   @default(false)
+  author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  favorites       Favorite[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([categoryId])
+  @@index([authorId])
+  @@index([taskType])
+  @@index([targetTool])
+  @@index([createdAt])
+  @@index([isFeatured])
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  userId    String
+  promptId  String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, promptId])
+  @@index([userId])
+  @@index([promptId])
+}
+
+model Category {
+  id             String         @id @default(cuid())
+  name           String         @unique
+  slug           String         @unique
+  description    String
+  icon           String
+  color          String
+  promptCount    Int            @default(0)
+  subcategories  Subcategory[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([slug])
+}
+
+model Subcategory {
+  id         String    @id @default(cuid())
+  name       String
+  slug       String
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@unique([categoryId, slug])
+  @@index([categoryId])
+}

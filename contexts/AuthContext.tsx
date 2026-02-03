@@ -6,35 +6,39 @@ import React, {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from "react";
-import type { User } from "@/types";
-import {
-  login as authLogin,
-  logout as authLogout,
-  isAuthenticated,
-  getCurrentUser,
-  testAccount,
-} from "@/lib/auth";
 
-const FAVORITES_STORAGE_KEY = "promptx_favorites";
-
-function getFavoritesStorageKey(userId?: number) {
-  if (!userId) return FAVORITES_STORAGE_KEY;
-  return `${FAVORITES_STORAGE_KEY}_${userId}`;
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  avatar: string | null;
+  bio: string | null;
+  promptCount: number;
+  followers: number;
+  following: number;
+  createdAt: string;
 }
 
 interface AuthContextType {
   user: User | null;
   isLoggedIn: boolean;
+  isLoading: boolean;
   login: (
     email: string,
     password: string,
-  ) => { success: boolean; error?: string };
-  logout: () => void;
-  testCredentials: { email: string; password: string };
-  favorites: number[];
-  toggleFavorite: (promptId: number) => void;
-  isFavorited: (promptId: number) => boolean;
+  ) => Promise<{ success: boolean; error?: string }>;
+  register: (
+    email: string,
+    password: string,
+    name: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
+  favorites: string[];
+  toggleFavorite: (promptId: string) => Promise<void>;
+  isFavorited: (promptId: string) => boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -42,72 +46,148 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [favorites, setFavorites] = useState<number[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
-  useEffect(() => {
-    // 初始化时检查认证状态
-    if (isAuthenticated()) {
-      const currentUser = getCurrentUser();
-      setUser(currentUser);
-      setIsLoggedIn(true);
-
-      // 加载收藏列表
-      const favoritesKey = getFavoritesStorageKey(currentUser?.id);
-      const savedFavorites = localStorage.getItem(favoritesKey);
-      if (savedFavorites) {
-        try {
-          setFavorites(JSON.parse(savedFavorites));
-        } catch {
-          setFavorites([]);
+  // 获取收藏列表
+  const fetchFavorites = async () => {
+    try {
+      const response = await fetch("/api/favorites");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setFavorites(data.data.map((p: { id: string }) => p.id));
         }
       }
+    } catch {
+      console.error("Failed to fetch favorites");
+    }
+  };
+
+  // 获取当前用户信息
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await fetch("/api/auth/me");
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setUser(data.data);
+          setIsLoggedIn(true);
+          // 获取收藏列表
+          await fetchFavorites();
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+        }
+      } else {
+        setUser(null);
+        setIsLoggedIn(false);
+      }
+    } catch {
+      setUser(null);
+      setIsLoggedIn(false);
+    } finally {
+      setIsLoading(false);
     }
   }, []);
 
-  const login = (email: string, password: string) => {
-    const result = authLogin(email, password);
-    if (result.success && result.user) {
-      setUser(result.user);
-      setIsLoggedIn(true);
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
 
-      // 加载收藏列表
-      const favoritesKey = getFavoritesStorageKey(result.user.id);
-      const savedFavorites = localStorage.getItem(favoritesKey);
-      if (savedFavorites) {
-        try {
-          setFavorites(JSON.parse(savedFavorites));
-        } catch {
-          setFavorites([]);
-        }
+  // 登录
+  const login = async (email: string, password: string) => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUser(data.data.user);
+        setIsLoggedIn(true);
+        await fetchFavorites();
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || "登录失败" };
       }
-
-      return { success: true };
+    } catch {
+      return { success: false, error: "网络错误，请稍后重试" };
     }
-    return { success: false, error: result.error };
   };
 
-  const logout = () => {
-    authLogout();
-    setUser(null);
-    setIsLoggedIn(false);
-    setFavorites([]);
+  // 注册
+  const register = async (email: string, password: string, name: string) => {
+    try {
+      const response = await fetch("/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setUser(data.data.user);
+        setIsLoggedIn(true);
+        return { success: true };
+      } else {
+        return { success: false, error: data.error || "注册失败" };
+      }
+    } catch {
+      return { success: false, error: "网络错误，请稍后重试" };
+    }
   };
 
-  const toggleFavorite = (promptId: number) => {
+  // 退出登录
+  const logout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+    } catch {
+      console.error("Logout error");
+    } finally {
+      setUser(null);
+      setIsLoggedIn(false);
+      setFavorites([]);
+    }
+  };
+
+  // 切换收藏
+  const toggleFavorite = async (promptId: string) => {
     if (!isLoggedIn) return;
 
-    setFavorites((prev) => {
-      const newFavorites = prev.includes(promptId)
-        ? prev.filter((id) => id !== promptId)
-        : [...prev, promptId];
+    const isFav = favorites.includes(promptId);
 
-      const favoritesKey = getFavoritesStorageKey(user?.id);
-      localStorage.setItem(favoritesKey, JSON.stringify(newFavorites));
-      return newFavorites;
-    });
+    try {
+      if (isFav) {
+        // 取消收藏
+        const response = await fetch(`/api/favorites/${promptId}`, {
+          method: "DELETE",
+        });
+        if (response.ok) {
+          setFavorites((prev) => prev.filter((id) => id !== promptId));
+        }
+      } else {
+        // 添加收藏
+        const response = await fetch("/api/favorites", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ promptId }),
+        });
+        if (response.ok) {
+          setFavorites((prev) => [...prev, promptId]);
+        }
+      }
+    } catch {
+      console.error("Toggle favorite error");
+    }
   };
 
-  const isFavorited = (promptId: number) => {
+  // 检查是否已收藏
+  const isFavorited = (promptId: string) => {
     return favorites.includes(promptId);
   };
 
@@ -116,9 +196,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       value={{
         user,
         isLoggedIn,
+        isLoading,
         login,
+        register,
         logout,
-        testCredentials: testAccount,
+        refreshUser,
         favorites,
         toggleFavorite,
         isFavorited,

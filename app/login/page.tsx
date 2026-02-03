@@ -6,9 +6,15 @@ import { useRouter } from "next/navigation";
 import { Sparkles, Eye, EyeOff, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+// 测试账号信息
+const testCredentials = {
+  email: "zhang@example.com",
+  password: "password123",
+};
+
 export default function LoginPage() {
   const router = useRouter();
-  const { login, isLoggedIn, testCredentials } = useAuth();
+  const { login, isLoggedIn, isLoading: authLoading } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,17 +24,17 @@ export default function LoginPage() {
 
   // 如果已登录，跳转到首页
   useEffect(() => {
-    if (isLoggedIn) {
+    if (!authLoading && isLoggedIn) {
       router.push("/");
     }
-  }, [isLoggedIn, router]);
+  }, [isLoggedIn, authLoading, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const result = login(email, password);
+    const result = await login(email, password);
 
     if (result.success) {
       router.push("/");
