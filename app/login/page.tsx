@@ -3,12 +3,12 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Sparkles, Eye, EyeOff, Info } from "lucide-react";
+import { Sparkles, Eye, EyeOff, Info, Mail, Phone } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
 // 测试账号信息
 const testCredentials = {
-  email: "zhang@example.com",
+  email: "demo@promptx.com",
   password: "password123",
 };
 
@@ -16,7 +16,9 @@ export default function LoginPage() {
   const router = useRouter();
   const { login, isLoggedIn, isLoading: authLoading } = useAuth();
 
+  const [loginType, setLoginType] = useState<"email" | "phone">("email");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +36,8 @@ export default function LoginPage() {
     setIsLoading(true);
     setError("");
 
-    const result = await login(email, password);
+    const identifier = loginType === "email" ? email : phone;
+    const result = await login(identifier, password, loginType);
 
     if (result.success) {
       router.push("/");
@@ -46,6 +49,7 @@ export default function LoginPage() {
   };
 
   const fillTestCredentials = () => {
+    setLoginType("email");
     setEmail(testCredentials.email);
     setPassword(testCredentials.password);
   };
@@ -98,6 +102,34 @@ export default function LoginPage() {
             </div>
           </div>
 
+          {/* Login Type Toggle */}
+          <div className="flex gap-2 mb-6 p-1 bg-gray-100 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setLoginType("email")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                loginType === "email"
+                  ? "bg-white text-primary-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Mail className="w-4 h-4" />
+              邮箱登录
+            </button>
+            <button
+              type="button"
+              onClick={() => setLoginType("phone")}
+              className={`flex-1 flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${
+                loginType === "phone"
+                  ? "bg-white text-primary-600 shadow-sm"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Phone className="w-4 h-4" />
+              手机登录
+            </button>
+          </div>
+
           {error && (
             <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
               <p className="text-sm text-red-600">{error}</p>
@@ -105,20 +137,36 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Email */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                邮箱地址
-              </label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="your@email.com"
-                className="input"
-                required
-              />
-            </div>
+            {/* Email or Phone */}
+            {loginType === "email" ? (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  邮箱地址
+                </label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="your@email.com"
+                  className="input"
+                  required
+                />
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  手机号码
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  placeholder="请输入11位手机号"
+                  className="input"
+                  required
+                />
+              </div>
+            )}
 
             {/* Password */}
             <div>

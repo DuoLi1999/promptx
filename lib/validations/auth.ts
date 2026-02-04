@@ -1,15 +1,31 @@
 import { z } from "zod";
 
-// 注册验证
+// 手机号正则
+const phoneRegex = /^1[3-9]\d{9}$/;
+
+// 注册验证（邮箱）
 export const registerSchema = z.object({
   email: z.string().min(1, "邮箱不能为空").email("请输入有效的邮箱地址"),
   password: z.string().min(6, "密码至少6个字符").max(100, "密码最多100个字符"),
   name: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
 });
 
-// 登录验证
+// 注册验证（手机号）
+export const registerWithPhoneSchema = z.object({
+  phone: z.string().regex(phoneRegex, "请输入有效的手机号"),
+  password: z.string().min(6, "密码至少6个字符").max(100, "密码最多100个字符"),
+  name: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
+});
+
+// 登录验证（邮箱）
 export const loginSchema = z.object({
   email: z.string().min(1, "邮箱不能为空").email("请输入有效的邮箱地址"),
+  password: z.string().min(1, "密码不能为空"),
+});
+
+// 登录验证（手机号）
+export const loginWithPhoneSchema = z.object({
+  phone: z.string().regex(phoneRegex, "请输入有效的手机号"),
   password: z.string().min(1, "密码不能为空"),
 });
 
@@ -25,5 +41,7 @@ export const updateProfileSchema = z.object({
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;
+export type RegisterWithPhoneInput = z.infer<typeof registerWithPhoneSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type LoginWithPhoneInput = z.infer<typeof loginWithPhoneSchema>;
 export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

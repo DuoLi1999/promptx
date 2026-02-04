@@ -1,21 +1,45 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { Suspense } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
-import { Search, Eye, Copy, Heart, X } from "lucide-react";
-import { mockPrompts } from "@/lib/data";
+import { Search, Eye, Copy, Heart, X, Loader2 } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { TaskTypeOptions, ToolOptions } from "@/types";
 
-export default function PromptsPage() {
+interface Prompt {
+  id: string;
+  title: string;
+  description: string;
+  categoryId: string;
+  categoryName: string;
+  subcategoryId?: string;
+  subcategoryName?: string;
+  taskType: string;
+  targetTool: string;
+  tags: string[];
+  viewCount: number;
+  copyCount: number;
+  favoriteCount: number;
+  authorName: string;
+  authorAvatar: string;
+  createdAt: string;
+  isAICreated?: boolean;
+}
+
+function PromptsContent() {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { isFavorited, toggleFavorite, isLoggedIn } = useAuth();
+
+  const [prompts, setPrompts] = useState<Prompt[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [total, setTotal] = useState(0);
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(
     searchParams.get("category") || null,
@@ -36,6 +60,41 @@ export default function PromptsPage() {
   const subcategories = selectedCategoryData?.subcategories || [];
   const selectedTaskTypeLabel =
     TaskTypeOptions.find((type) => type.id === selectedTaskType)?.label || "";
+
+  // Fetch prompts from API
+  const fetchPrompts = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (selectedCategory) {
+        const cat = categories.find(c => c.id === selectedCategory);
+        if (cat) params.set("category", cat.name);
+      }
+      if (selectedSubcategory) {
+        const cat = categories.find(c => c.id === selectedCategory);
+        const sub = cat?.subcategories.find(s => s.id === selectedSubcategory);
+        if (sub) params.set("subcategory", sub.name);
+      }
+      if (selectedTaskType) params.set("taskType", selectedTaskType);
+      if (selectedTools.length > 0) params.set("targetTool", selectedTools[0]);
+
+      const res = await fetch(`/api/prompts?${params.toString()}`);
+      const data = await res.json();
+
+      if (data.success) {
+        setPrompts(data.data || []);
+        setTotal(data.pagination?.total || 0);
+      }
+    } catch (err) {
+      console.error("Failed to fetch prompts:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [selectedCategory, selectedSubcategory, selectedTaskType, selectedTools]);
+
+  useEffect(() => {
+    fetchPrompts();
+  }, [fetchPrompts]);
 
   useEffect(() => {
     const nextCategory = searchParams.get("category") || null;
@@ -75,31 +134,6 @@ export default function PromptsPage() {
     selectedTools,
   ]);
 
-  const filteredPrompts = useMemo(() => {
-    return mockPrompts.filter((prompt) => {
-      if (selectedCategory && prompt.categoryId !== selectedCategory) {
-        return false;
-      }
-
-      if (selectedSubcategory && prompt.subcategoryId !== selectedSubcategory) {
-        return false;
-      }
-
-      if (selectedTaskType && prompt.taskType !== selectedTaskType) {
-        return false;
-      }
-
-      if (
-        selectedTools.length > 0 &&
-        !selectedTools.includes(prompt.targetTool)
-      ) {
-        return false;
-      }
-
-      return true;
-    });
-  }, [selectedCategory, selectedSubcategory, selectedTaskType, selectedTools]);
-
   const toggleTool = (tool: string) => {
     setSelectedTools((prev) =>
       prev.includes(tool) ? prev.filter((t) => t !== tool) : [...prev, tool],
@@ -108,7 +142,7 @@ export default function PromptsPage() {
 
   const handleFavoriteClick = (
     e: React.MouseEvent<HTMLButtonElement>,
-    promptId: number,
+    promptId: string,
   ) => {
     e.preventDefault();
     e.stopPropagation();
@@ -285,7 +319,7 @@ export default function PromptsPage() {
               <div>
                 <h2 className="text-2xl font-bold text-gray-900">提示词库</h2>
                 <p className="text-gray-600 text-sm mt-1">
-                  共 {filteredPrompts.length} 个提示词
+                  共 {total} 个提示词
                 </p>
               </div>
             </div>
@@ -320,9 +354,13 @@ export default function PromptsPage() {
               </div>
             )}
 
-            {filteredPrompts.length > 0 ? (
+            {isLoading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+              </div>
+            ) : prompts.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {filteredPrompts.map((prompt) => (
+                {prompts.map((prompt) => (
                   <Link
                     key={prompt.id}
                     href={`/prompts/${prompt.id}`}
@@ -388,8 +426,8 @@ export default function PromptsPage() {
                       </div>
                       <div className="flex items-center">
                         <Image
-                          src={prompt.authorAvatar}
-                          alt={prompt.author}
+                          src={prompt.authorAvatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${prompt.authorName}`}
+                          alt={prompt.authorName}
                           width={24}
                           height={24}
                           className="w-6 h-6 rounded-full"
@@ -412,5 +450,17 @@ export default function PromptsPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PromptsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+      </div>
+    }>
+      <PromptsContent />
+    </Suspense>
   );
 }

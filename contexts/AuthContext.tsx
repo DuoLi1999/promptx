@@ -11,7 +11,8 @@ import React, {
 
 interface User {
   id: string;
-  email: string;
+  email: string | null;
+  phone: string | null;
   name: string;
   avatar: string | null;
   bio: string | null;
@@ -26,13 +27,15 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   login: (
-    email: string,
+    identifier: string,
     password: string,
+    type: "email" | "phone",
   ) => Promise<{ success: boolean; error?: string }>;
   register: (
-    email: string,
+    identifier: string,
     password: string,
     name: string,
+    type: "email" | "phone",
   ) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
@@ -96,12 +99,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [refreshUser]);
 
   // 登录
-  const login = async (email: string, password: string) => {
+  const login = async (identifier: string, password: string, type: "email" | "phone") => {
     try {
+      const body = type === "email"
+        ? { email: identifier, password }
+        : { phone: identifier, password };
+
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
@@ -120,12 +127,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   // 注册
-  const register = async (email: string, password: string, name: string) => {
+  const register = async (identifier: string, password: string, name: string, type: "email" | "phone") => {
     try {
+      const body = type === "email"
+        ? { email: identifier, password, name }
+        : { phone: identifier, password, name };
+
       const response = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, name }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();

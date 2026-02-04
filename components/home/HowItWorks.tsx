@@ -1,28 +1,28 @@
-import { Search, Copy, Sparkles, CheckCircle } from "lucide-react";
+import { Search, Wand2, Copy, Sparkles } from "lucide-react";
 
 const steps = [
   {
     icon: Search,
-    title: "搜索或浏览",
-    description: "通过分类、关键词或标签，快速找到您需要的 Prompt",
+    title: "发现提示词",
+    description: "按职业分类浏览，或搜索关键词，快速找到您需要的 Prompt",
     color: "bg-blue-100 text-blue-600",
   },
   {
+    icon: Wand2,
+    title: "AI智能创作",
+    description: "输入您的需求，AI 帮您生成专业的提示词，省时省力",
+    color: "bg-purple-100 text-purple-600",
+  },
+  {
     icon: Copy,
-    title: "一键复制",
-    description: "选中心仪的 Prompt，点击即可复制到剪贴板",
+    title: "一键复制使用",
+    description: "选中心仪的 Prompt，点击即可复制到 ChatGPT、Claude 等工具",
     color: "bg-green-100 text-green-600",
   },
   {
     icon: Sparkles,
-    title: "粘贴使用",
-    description: "将 Prompt 粘贴到 ChatGPT、Claude 等 AI 工具中",
-    color: "bg-purple-100 text-purple-600",
-  },
-  {
-    icon: CheckCircle,
-    title: "获得结果",
-    description: "享受专业 Prompt 带来的高质量 AI 输出",
+    title: "分享您的作品",
+    description: "创作或优化好的提示词，发布到平台与他人分享",
     color: "bg-orange-100 text-orange-600",
   },
 ];
@@ -35,7 +35,7 @@ export default function HowItWorks() {
         <div className="text-center mb-16">
           <h2 className="section-title mb-4">如何使用</h2>
           <p className="section-description max-w-2xl mx-auto">
-            只需简单四步，即可获得专业级的 AI 输出结果
+            简单四步，开启您的 AI 提示词之旅
           </p>
         </div>
 

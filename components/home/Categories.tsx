@@ -1,64 +1,70 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Microscope,
-  Video,
   BarChart3,
   PenTool,
   Code,
-  Megaphone,
   Briefcase,
   Palette,
   BookOpen,
   ShoppingBag,
   Heart,
-  Music,
   TrendingUp,
   Headphones,
   Users,
   Calculator,
-  Scale,
-  ClipboardList,
   Lightbulb,
   Rocket,
   Globe,
 } from "lucide-react";
 import { categories } from "@/lib/categories";
-import { mockPrompts } from "@/lib/data";
 
 // 图标映射
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
   Microscope,
-  Video,
   BarChart: BarChart3,
   PenTool,
   Code,
-  Megaphone,
   Briefcase,
   Palette,
   BookOpen,
   ShoppingBag,
   Heart,
-  Music,
   TrendingUp,
   Headphones,
   Users,
   Calculator,
-  Scale,
-  ClipboardList,
   Lightbulb,
   Rocket,
   Globe,
 };
 
-// 统计每个分类的实际提示词数量
-function getCategoryPromptCount(categoryId: string): number {
-  return mockPrompts.filter((prompt) => prompt.categoryId === categoryId)
-    .length;
-}
-
 export default function Categories() {
-  // 只展示前12个主要分类
-  const displayCategories = categories.slice(0, 12);
+  const [promptCounts, setPromptCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    // 从 API 获取每个分类的提示词数量
+    const fetchCounts = async () => {
+      try {
+        const counts: Record<string, number> = {};
+        for (const category of categories) {
+          const res = await fetch(`/api/prompts?category=${encodeURIComponent(category.name)}&limit=1`);
+          const data = await res.json();
+          if (data.success) {
+            counts[category.id] = data.pagination?.total || 0;
+          }
+        }
+        setPromptCounts(counts);
+      } catch (error) {
+        console.error("Failed to fetch prompt counts:", error);
+      }
+    };
+
+    fetchCounts();
+  }, []);
 
   return (
     <section className="py-20 bg-gradient-to-b from-white to-gray-50">
@@ -67,30 +73,30 @@ export default function Categories() {
         <div className="text-center mb-12">
           <h2 className="section-title mb-4">按职业分类浏览</h2>
           <p className="section-description max-w-2xl mx-auto">
-            我们为 20+ 不同职业和领域精心策划了专业的 Prompt 库
+            我们为 15 个不同职业和领域精心策划了专业的 Prompt 库
           </p>
         </div>
 
-        {/* Categories Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-          {displayCategories.map((category) => {
+        {/* Categories Grid - 显示所有15个分类 */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+          {categories.map((category) => {
             const IconComponent = iconMap[category.icon] || Briefcase;
-            const actualCount = getCategoryPromptCount(category.id);
+            const count = promptCounts[category.id] || 0;
             return (
               <Link
                 key={category.id}
                 href={`/prompts?category=${encodeURIComponent(category.name)}`}
-                className="card-interactive p-6 group"
+                className="card-interactive p-5 group"
               >
                 <div
-                  className={`w-12 h-12 ${category.color} rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}
+                  className={`w-12 h-12 ${category.color} rounded-xl flex items-center justify-center mb-3 group-hover:scale-110 transition-transform`}
                 >
                   <IconComponent className="w-6 h-6" />
                 </div>
-                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors">
+                <h3 className="font-semibold text-gray-900 mb-1 group-hover:text-primary-600 transition-colors text-sm">
                   {category.name}
                 </h3>
-                <p className="text-sm text-gray-500">{actualCount} 个提示词</p>
+                <p className="text-xs text-gray-500">{count} 个提示词</p>
               </Link>
             );
           })}

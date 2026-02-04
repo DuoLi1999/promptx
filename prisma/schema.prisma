@@ -9,7 +9,8 @@ datasource db {
 
 model User {
   id           String    @id @default(cuid())
-  email        String    @unique
+  email        String?   @unique
+  phone        String?   @unique
   password     String
   name         String
   avatar       String?
@@ -23,6 +24,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   @@index([email])
+  @@index([phone])
 }
 
 model Prompt {
@@ -36,7 +38,6 @@ model Prompt {
   subcategoryName String?
   taskType        String
   targetTool      String
-  difficulty      String
   authorId        String
   authorName      String
   authorAvatar    String
@@ -48,6 +49,7 @@ model Prompt {
   tags            String
   isFeatured      Boolean   @default(false)
   isTrending      Boolean   @default(false)
+  isAICreated     Boolean   @default(false)
   author          User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
   favorites       Favorite[]
   createdAt       DateTime  @default(now())

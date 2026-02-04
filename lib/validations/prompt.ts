@@ -17,13 +17,11 @@ export const createPromptSchema = z.object({
   subcategoryName: z.string().optional(),
   taskType: z.string().min(1, "请选择任务类型"),
   targetTool: z.string().min(1, "请选择目标工具"),
-  difficulty: z.enum(["beginner", "intermediate", "advanced"], {
-    message: "请选择有效的难度等级",
-  }),
   tags: z
     .array(z.string())
     .min(1, "至少添加一个标签")
     .max(10, "最多添加10个标签"),
+  isAICreated: z.boolean().optional().default(false),
 });
 
 // 更新提示词验证
@@ -38,7 +36,6 @@ export const queryPromptsSchema = z.object({
   subcategory: z.string().optional(),
   taskType: z.string().optional(),
   targetTool: z.string().optional(),
-  difficulty: z.string().optional(),
   sort: z.enum(["newest", "popular", "rating"]).default("newest"),
   featured: z.coerce.boolean().optional(),
   trending: z.coerce.boolean().optional(),

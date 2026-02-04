@@ -21,6 +21,7 @@ export async function GET() {
     return successResponse({
       id: user.id,
       email: user.email,
+      phone: user.phone,
       name: user.name,
       avatar: user.avatar,
       bio: user.bio,
@@ -63,6 +64,7 @@ export async function PUT(request: NextRequest) {
     return successResponse({
       id: updatedUser.id,
       email: updatedUser.email,
+      phone: updatedUser.phone,
       name: updatedUser.name,
       avatar: updatedUser.avatar,
       bio: updatedUser.bio,

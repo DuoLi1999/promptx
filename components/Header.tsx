@@ -9,14 +9,17 @@ import {
   Menu,
   X,
   Sparkles,
-  Plus,
+  Wand2,
   User,
   LogOut,
   ChevronDown,
+  FileText,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
-const navigation = [{ name: "浏览提示词", href: "/prompts" }];
+const navigation = [
+  { name: "浏览提示词", href: "/prompts" },
+];
 
 export default function Header() {
   const router = useRouter();
@@ -90,13 +93,22 @@ export default function Header() {
           <div className="hidden md:flex items-center space-x-3">
             {isLoggedIn ? (
               <>
+                {/* Publish Button */}
+                <Link
+                  href="/publish"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-green-500 to-emerald-500 hover:from-green-600 hover:to-emerald-600 rounded-lg transition-colors"
+                >
+                  <FileText className="w-4 h-4" />
+                  <span>发布</span>
+                </Link>
+
                 {/* Create Button */}
                 <Link
-                  href="/create"
-                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-primary-600 hover:text-primary-700 hover:bg-primary-50 rounded-lg transition-colors"
+                  href="/optimizer"
+                  className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 rounded-lg transition-colors"
                 >
-                  <Plus className="w-4 h-4" />
-                  <span>发布</span>
+                  <Wand2 className="w-4 h-4" />
+                  <span>AI创作</span>
                 </Link>
 
                 {/* User Menu */}
@@ -129,7 +141,7 @@ export default function Header() {
                           <p className="font-medium text-gray-900 text-sm">
                             {user?.name}
                           </p>
-                          <p className="text-xs text-gray-500">{user?.email}</p>
+                          <p className="text-xs text-gray-500">{user?.email || user?.phone}</p>
                         </div>
                         <Link
                           href="/profile"
@@ -138,14 +150,6 @@ export default function Header() {
                         >
                           <User className="w-4 h-4" />
                           个人主页
-                        </Link>
-                        <Link
-                          href="/create"
-                          className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                          onClick={() => setUserMenuOpen(false)}
-                        >
-                          <Plus className="w-4 h-4" />
-                          发布提示词
                         </Link>
                         <hr className="my-1" />
                         <button
@@ -222,14 +226,24 @@ export default function Header() {
               ))}
 
               {isLoggedIn && (
-                <Link
-                  href="/create"
-                  className="flex items-center gap-2 px-4 py-3 text-primary-600 hover:bg-primary-50 rounded-lg text-sm font-medium"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Plus className="w-4 h-4" />
-                  发布提示词
-                </Link>
+                <>
+                  <Link
+                    href="/publish"
+                    className="flex items-center gap-2 px-4 py-3 text-green-600 hover:bg-green-50 rounded-lg text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <FileText className="w-4 h-4" />
+                    发布提示词
+                  </Link>
+                  <Link
+                    href="/optimizer"
+                    className="flex items-center gap-2 px-4 py-3 text-purple-600 hover:bg-purple-50 rounded-lg text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Wand2 className="w-4 h-4" />
+                    AI创作
+                  </Link>
+                </>
               )}
 
               <hr className="my-2" />
@@ -251,9 +265,17 @@ export default function Header() {
                       <p className="font-medium text-gray-900 text-sm">
                         {user?.name}
                       </p>
-                      <p className="text-xs text-gray-500">{user?.email}</p>
+                      <p className="text-xs text-gray-500">{user?.email || user?.phone}</p>
                     </div>
                   </div>
+                  <Link
+                    href="/profile"
+                    className="flex items-center gap-2 px-4 py-3 text-gray-600 hover:bg-gray-50 rounded-lg text-sm font-medium"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <User className="w-4 h-4" />
+                    个人主页
+                  </Link>
                   <button
                     onClick={() => {
                       handleLogout();

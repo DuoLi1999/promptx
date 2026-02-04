@@ -21,7 +21,7 @@ export interface Subcategory {
 
 // Prompt 类型
 export interface Prompt {
-  id: number;
+  id: number | string;
   title: string;
   description: string;
   content: string;
@@ -32,13 +32,12 @@ export interface Prompt {
   taskType: TaskType;
 
   // 元数据
-  outputType: string; // 输出物类型：综述提纲、逐字稿、SQL等
+  outputType?: string; // 输出物类型：综述提纲、逐字稿、SQL等
   targetTool: string; // 适用工具：ChatGPT、Claude、Gemini等
-  difficulty: "beginner" | "intermediate" | "advanced"; // 难度等级
 
   // 作者信息
   author: string;
-  authorId: number;
+  authorId: number | string;
   authorAvatar: string;
 
   // 标签
@@ -58,6 +57,7 @@ export interface Prompt {
   // 状态
   isFeatured?: boolean;
   isTrending?: boolean;
+  isAICreated?: boolean; // 是否AI创作
 
   // 功能特点
   features?: string[];
@@ -66,12 +66,14 @@ export interface Prompt {
 
 // 用户类型
 export interface User {
-  id: number;
+  id: number | string;
   name: string;
-  email: string;
+  email?: string;
+  phone?: string;
   avatar: string;
   bio?: string;
-  joinedAt: string;
+  joinedAt?: string;
+  createdAt?: string;
   promptCount: number;
   followers: number;
   following: number;
@@ -89,26 +91,16 @@ export interface FilterOptions {
   taskType?: TaskType;
   outputType?: string;
   targetTool?: string;
-  difficulty?: string;
   sortBy?: "newest" | "popular" | "rating";
   keyword?: string;
 }
 
-// 难度等级映射
-export const DifficultyLabels: Record<string, string> = {
-  beginner: "入门",
-  intermediate: "进阶",
-  advanced: "专家",
-};
-
-export type TaskType = "text" | "image" | "code" | "data" | "video";
+// 任务类型 - 简化为文生文和文生图
+export type TaskType = "text" | "image";
 
 export const TaskTypeOptions: Array<{ id: TaskType; label: string }> = [
   { id: "text", label: "文生文" },
   { id: "image", label: "文生图" },
-  { id: "code", label: "文生代码" },
-  { id: "data", label: "数据/分析" },
-  { id: "video", label: "视频/脚本" },
 ];
 
 // 工具选项 - 包含国内外主流AI工具

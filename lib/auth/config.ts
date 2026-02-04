@@ -8,13 +8,15 @@ const key = new TextEncoder().encode(secretKey);
 
 export interface JWTPayload extends JoseJWTPayload {
   userId: string;
-  email: string;
+  email?: string;
+  phone?: string;
 }
 
 // 生成 JWT token
 export async function encrypt(payload: {
   userId: string;
-  email: string;
+  email?: string;
+  phone?: string;
 }): Promise<string> {
   return await new SignJWT(payload as JWTPayload)
     .setProtectedHeader({ alg: "HS256" })

@@ -27,7 +27,6 @@ export async function GET(request: NextRequest) {
       subcategory: searchParams.get("subcategory") || undefined,
       taskType: searchParams.get("taskType") || undefined,
       targetTool: searchParams.get("targetTool") || undefined,
-      difficulty: searchParams.get("difficulty") || undefined,
       sort: searchParams.get("sort") || "newest",
       featured: searchParams.get("featured") || undefined,
       trending: searchParams.get("trending") || undefined,
@@ -45,7 +44,6 @@ export async function GET(request: NextRequest) {
       subcategory,
       taskType,
       targetTool,
-      difficulty,
       sort,
       featured,
       trending,
@@ -78,10 +76,6 @@ export async function GET(request: NextRequest) {
 
     if (targetTool) {
       where.targetTool = targetTool;
-    }
-
-    if (difficulty) {
-      where.difficulty = difficulty;
     }
 
     if (featured) {
@@ -166,7 +160,7 @@ export async function POST(request: NextRequest) {
         subcategoryName: data.subcategoryName,
         taskType: data.taskType,
         targetTool: data.targetTool,
-        difficulty: data.difficulty,
+        isAICreated: data.isAICreated || false,
         authorId: user.id,
         authorName: user.name,
         authorAvatar: user.avatar || "",
