@@ -9,7 +9,7 @@ import { Search, Eye, Copy, Heart, X, Loader2 } from "lucide-react";
 import { categories } from "@/lib/categories";
 import { formatNumber } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { TaskTypeOptions, ToolOptions } from "@/types";
+import { TaskTypeOptions, ToolOptions, getToolsByTaskType } from "@/types";
 
 interface Prompt {
   id: string;
@@ -160,7 +160,7 @@ function PromptsContent() {
     setSelectedTools([]);
   };
 
-  const allTools = ToolOptions;
+  const allTools = getToolsByTaskType(selectedTaskType).filter(t => t !== "其他");
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -207,11 +207,13 @@ function PromptsContent() {
                   {TaskTypeOptions.map((type) => (
                     <button
                       key={type.id}
-                      onClick={() =>
-                        setSelectedTaskType(
-                          selectedTaskType === type.id ? null : type.id,
-                        )
-                      }
+                      onClick={() => {
+                        const newTaskType = selectedTaskType === type.id ? null : type.id;
+                        setSelectedTaskType(newTaskType);
+                        // 清除不在新工具列表中的已选工具
+                        const newTools = getToolsByTaskType(newTaskType);
+                        setSelectedTools((prev) => prev.filter((t) => newTools.includes(t)));
+                      }}
                       className={`px-3 py-2 rounded-lg text-sm transition-colors ${
                         selectedTaskType === type.id
                           ? "bg-primary-600 text-white"
@@ -416,12 +418,12 @@ function PromptsContent() {
                           <span>{formatNumber(prompt.viewCount)}</span>
                         </span>
                         <span className="flex items-center space-x-1">
-                          <Copy className="w-4 h-4" />
-                          <span>{formatNumber(prompt.copyCount)}</span>
-                        </span>
-                        <span className="flex items-center space-x-1">
                           <Heart className="w-4 h-4" />
                           <span>{formatNumber(prompt.favoriteCount)}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Copy className="w-4 h-4" />
+                          <span>{formatNumber(prompt.copyCount)}</span>
                         </span>
                       </div>
                       <div className="flex items-center">

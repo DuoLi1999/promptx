@@ -2,9 +2,9 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   Sparkles,
-  Lock,
   Copy,
   Check,
   Loader2,
@@ -32,7 +32,8 @@ interface PromptMetadata {
 }
 
 export default function PromptOptimizer() {
-  const { isLoggedIn, user } = useAuth();
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
 
   const [intention, setIntention] = useState("");
   const [language, setLanguage] = useState("zh");
@@ -51,6 +52,11 @@ export default function PromptOptimizer() {
   const [metadata, setMetadata] = useState<PromptMetadata | null>(null);
 
   const handleOptimize = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     if (intention.trim().length < 10) {
       setError("请描述您的意图，至少10个字符");
       return;
@@ -220,47 +226,6 @@ export default function PromptOptimizer() {
   };
 
   const isFormValid = intention.trim().length >= 10;
-
-  // 未登录状态
-  if (!isLoggedIn) {
-    return (
-      <section className="py-16 bg-gradient-to-b from-white to-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-500 rounded-2xl mb-4">
-              <Wand2 className="w-8 h-8 text-white" />
-            </div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              AI 提示词优化助手
-            </h2>
-            <p className="text-gray-600 max-w-2xl mx-auto">
-              描述您的需求，AI 将为您生成专业、高效的提示词，并支持一键发布到社区
-            </p>
-          </div>
-
-          <div className="card p-8 text-center">
-            <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock className="w-8 h-8 text-primary-600" />
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
-              登录即可使用
-            </h3>
-            <p className="text-gray-600 mb-6">
-              使用优化助手需要登录账户，请先登录或注册
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/login" className="btn-primary w-full sm:w-auto">
-                登录
-              </Link>
-              <Link href="/signup" className="btn-outline w-full sm:w-auto">
-                注册账户
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
-    );
-  }
 
   return (
     <section id="optimizer" className="py-16 bg-gradient-to-b from-white to-gray-50">

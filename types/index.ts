@@ -104,6 +104,47 @@ export const TaskTypeOptions: Array<{ id: TaskType; label: string }> = [
 ];
 
 // 工具选项 - 包含国内外主流AI工具
+// 文生文工具
+export const TextToolOptions = [
+  "ChatGPT",
+  "Claude",
+  "Gemini",
+  "Copilot",
+  "Perplexity",
+  "DeepSeek",
+  "豆包",
+  "元宝",
+  "通义千问",
+  "文心一言",
+  "Kimi",
+  "智谱清言",
+  "讯飞星火",
+  "混元",
+  "通用",
+  "其他",
+];
+
+// 文生图工具 - 包含专用图像模型和多模态模型
+export const ImageToolOptions = [
+  // 专用图像生成模型
+  "Midjourney",
+  "Stable Diffusion",
+  "DALL-E",
+  "Flux",
+  "Leonardo AI",
+  "Adobe Firefly",
+  // 多模态模型（也支持生图）
+  "ChatGPT",
+  "Gemini",
+  "通义千问",
+  "文心一言",
+  "豆包",
+  "智谱清言",
+  "通用",
+  "其他",
+];
+
+// 全部工具（用于未选择任务类型时）
 export const ToolOptions = [
   // 国际主流
   "ChatGPT",
@@ -121,10 +162,21 @@ export const ToolOptions = [
   "智谱清言",
   "讯飞星火",
   "混元",
-  // 图像生成
+  // 图像生成专用
   "Midjourney",
   "Stable Diffusion",
   "DALL-E",
+  "Flux",
+  "Leonardo AI",
+  "Adobe Firefly",
   // 通用
   "通用",
+  "其他",
 ];
+
+// 根据任务类型获取对应工具列表
+export function getToolsByTaskType(taskType: string | null): string[] {
+  if (taskType === "text") return TextToolOptions;
+  if (taskType === "image") return ImageToolOptions;
+  return ToolOptions;
+}

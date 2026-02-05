@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Send,
-  Lock,
   ArrowLeft,
   Loader2,
   Check,
@@ -14,7 +13,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { categories } from "@/lib/categories";
-import { TaskTypeOptions, ToolOptions } from "@/types";
+import { TaskTypeOptions, ToolOptions, getToolsByTaskType } from "@/types";
 
 export default function PublishPage() {
   const router = useRouter();
@@ -26,6 +25,7 @@ export default function PublishPage() {
   const [categoryId, setCategoryId] = useState("");
   const [taskType, setTaskType] = useState("text");
   const [targetTool, setTargetTool] = useState("");
+  const [customTool, setCustomTool] = useState("");
   const [tags, setTags] = useState("");
 
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -36,33 +36,13 @@ export default function PublishPage() {
   // 获取选中的分类信息
   const selectedCategory = categories.find((c) => c.id === categoryId);
 
-  // 如果未登录，显示登录提示
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-10 h-10 text-primary-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">需要登录</h1>
-          <p className="text-gray-600 mb-8">
-            发布提示词需要登录账户。请先登录或注册一个新账户。
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login" className="btn-primary w-full sm:w-auto">
-              登录
-            </Link>
-            <Link href="/signup" className="btn-outline w-full sm:w-auto">
-              注册账户
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
 
     // 验证
     if (title.length < 5) {
@@ -89,6 +69,10 @@ export default function PublishPage() {
       setError("请选择目标工具");
       return;
     }
+    if (targetTool === "其他" && !customTool.trim()) {
+      setError("请输入自定义工具名称");
+      return;
+    }
 
     setIsSubmitting(true);
     setError("");
@@ -113,7 +97,7 @@ export default function PublishPage() {
           categoryId,
           categoryName: selectedCategory?.name || "",
           taskType,
-          targetTool,
+          targetTool: targetTool === "其他" ? customTool.trim() : targetTool,
           tags: tagsArray,
           isAICreated: false,
         }),
@@ -281,7 +265,16 @@ export default function PublishPage() {
                 <div className="relative">
                   <select
                     value={taskType}
-                    onChange={(e) => setTaskType(e.target.value)}
+                    onChange={(e) => {
+                      const newType = e.target.value;
+                      setTaskType(newType);
+                      // 清除不适用于新任务类型的已选工具
+                      const validTools = getToolsByTaskType(newType);
+                      if (targetTool && !validTools.includes(targetTool)) {
+                        setTargetTool("");
+                        setCustomTool("");
+                      }
+                    }}
                     className="input appearance-none pr-10"
                     required
                   >
@@ -302,12 +295,17 @@ export default function PublishPage() {
                 <div className="relative">
                   <select
                     value={targetTool}
-                    onChange={(e) => setTargetTool(e.target.value)}
+                    onChange={(e) => {
+                      setTargetTool(e.target.value);
+                      if (e.target.value !== "其他") {
+                        setCustomTool("");
+                      }
+                    }}
                     className="input appearance-none pr-10"
                     required
                   >
                     <option value="">选择目标工具</option>
-                    {ToolOptions.map((tool) => (
+                    {getToolsByTaskType(taskType).map((tool) => (
                       <option key={tool} value={tool}>
                         {tool}
                       </option>
@@ -315,6 +313,16 @@ export default function PublishPage() {
                   </select>
                   <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                 </div>
+                {targetTool === "其他" && (
+                  <input
+                    type="text"
+                    value={customTool}
+                    onChange={(e) => setCustomTool(e.target.value)}
+                    placeholder="请输入工具名称"
+                    className="input mt-2"
+                    maxLength={50}
+                  />
+                )}
               </div>
             </div>
 

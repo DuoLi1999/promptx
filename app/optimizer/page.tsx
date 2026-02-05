@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
   Sparkles,
-  Lock,
   Copy,
   Check,
   Loader2,
@@ -17,7 +16,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { categories } from "@/lib/categories";
-import { TaskTypeOptions, ToolOptions } from "@/types";
+import { TaskTypeOptions, ToolOptions, getToolsByTaskType } from "@/types";
 
 const LANGUAGES = [
   { value: "zh", label: "中文" },
@@ -43,37 +42,18 @@ export default function OptimizerPage() {
   const [publishCategoryId, setPublishCategoryId] = useState("");
   const [publishTaskType, setPublishTaskType] = useState("text");
   const [publishTargetTool, setPublishTargetTool] = useState("");
+  const [publishCustomTool, setPublishCustomTool] = useState("");
   const [publishTags, setPublishTags] = useState("");
   const [isPublishing, setIsPublishing] = useState(false);
   const [isGeneratingMeta, setIsGeneratingMeta] = useState(false);
   const [publishError, setPublishError] = useState("");
 
-  // 如果未登录，显示登录提示
-  if (!isLoggedIn) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center py-12 px-4">
-        <div className="max-w-md w-full text-center">
-          <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-6">
-            <Lock className="w-10 h-10 text-primary-600" />
-          </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">需要登录</h1>
-          <p className="text-gray-600 mb-8">
-            使用优化助手需要登录账户。请先登录或注册一个新账户。
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link href="/login" className="btn-primary w-full sm:w-auto">
-              登录
-            </Link>
-            <Link href="/signup" className="btn-outline w-full sm:w-auto">
-              注册账户
-            </Link>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   const handleOptimize = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     if (intention.trim().length < 10) {
       setError("请描述您的意图，至少10个字符");
       return;
@@ -166,6 +146,11 @@ export default function OptimizerPage() {
   };
 
   const handleOpenPublish = async () => {
+    if (!isLoggedIn) {
+      router.push("/login");
+      return;
+    }
+
     setShowPublishModal(true);
     setPublishError("");
 
@@ -220,6 +205,10 @@ export default function OptimizerPage() {
       setPublishError("请选择目标工具");
       return;
     }
+    if (publishTargetTool === "其他" && !publishCustomTool.trim()) {
+      setPublishError("请输入自定义工具名称");
+      return;
+    }
 
     setIsPublishing(true);
     setPublishError("");
@@ -245,7 +234,7 @@ export default function OptimizerPage() {
           categoryId: publishCategoryId,
           categoryName: selectedCategory?.name || "",
           taskType: publishTaskType,
-          targetTool: publishTargetTool,
+          targetTool: publishTargetTool === "其他" ? publishCustomTool.trim() : publishTargetTool,
           tags: tagsArray,
           isAICreated: true,
         }),
@@ -552,7 +541,15 @@ export default function OptimizerPage() {
                       <div className="relative">
                         <select
                           value={publishTaskType}
-                          onChange={(e) => setPublishTaskType(e.target.value)}
+                          onChange={(e) => {
+                            const newType = e.target.value;
+                            setPublishTaskType(newType);
+                            const validTools = getToolsByTaskType(newType);
+                            if (publishTargetTool && !validTools.includes(publishTargetTool)) {
+                              setPublishTargetTool("");
+                              setPublishCustomTool("");
+                            }
+                          }}
                           className="input appearance-none pr-10"
                         >
                           {TaskTypeOptions.map((t) => (
@@ -572,11 +569,16 @@ export default function OptimizerPage() {
                       <div className="relative">
                         <select
                           value={publishTargetTool}
-                          onChange={(e) => setPublishTargetTool(e.target.value)}
+                          onChange={(e) => {
+                            setPublishTargetTool(e.target.value);
+                            if (e.target.value !== "其他") {
+                              setPublishCustomTool("");
+                            }
+                          }}
                           className="input appearance-none pr-10"
                         >
                           <option value="">选择工具</option>
-                          {ToolOptions.map((tool) => (
+                          {getToolsByTaskType(publishTaskType).map((tool) => (
                             <option key={tool} value={tool}>
                               {tool}
                             </option>
@@ -584,6 +586,16 @@ export default function OptimizerPage() {
                         </select>
                         <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
                       </div>
+                      {publishTargetTool === "其他" && (
+                        <input
+                          type="text"
+                          value={publishCustomTool}
+                          onChange={(e) => setPublishCustomTool(e.target.value)}
+                          placeholder="请输入工具名称"
+                          className="input mt-2"
+                          maxLength={50}
+                        />
+                      )}
                     </div>
                   </div>
 
