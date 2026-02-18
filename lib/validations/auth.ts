@@ -3,17 +3,25 @@ import { z } from "zod";
 // 手机号正则
 const phoneRegex = /^1[3-9]\d{9}$/;
 
+// 密码强度验证
+const passwordSchema = z
+  .string()
+  .min(8, "密码至少8个字符")
+  .max(100, "密码最多100个字符")
+  .regex(/[A-Za-z]/, "密码需要包含字母")
+  .regex(/[0-9]/, "密码需要包含数字");
+
 // 注册验证（邮箱）
 export const registerSchema = z.object({
   email: z.string().min(1, "邮箱不能为空").email("请输入有效的邮箱地址"),
-  password: z.string().min(6, "密码至少6个字符").max(100, "密码最多100个字符"),
+  password: passwordSchema,
   name: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
 });
 
 // 注册验证（手机号）
 export const registerWithPhoneSchema = z.object({
   phone: z.string().regex(phoneRegex, "请输入有效的手机号"),
-  password: z.string().min(6, "密码至少6个字符").max(100, "密码最多100个字符"),
+  password: passwordSchema,
   name: z.string().min(2, "用户名至少2个字符").max(50, "用户名最多50个字符"),
 });
 

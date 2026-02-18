@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
       // 设置 cookie
       await setToken(token);
 
-      // 返回用户信息（不包含密码）
+      // 返回用户信息（不包含密码，token 通过 httpOnly cookie 传递）
       return successResponse(
         {
           user: {
@@ -74,7 +74,6 @@ export async function POST(request: NextRequest) {
             following: user.following,
             createdAt: user.createdAt,
           },
-          token,
         },
         201,
       );
@@ -121,7 +120,7 @@ export async function POST(request: NextRequest) {
       // 设置 cookie
       await setToken(token);
 
-      // 返回用户信息（不包含密码）
+      // 返回用户信息（不包含密码，token 通过 httpOnly cookie 传递）
       return successResponse(
         {
           user: {
@@ -136,7 +135,6 @@ export async function POST(request: NextRequest) {
             following: user.following,
             createdAt: user.createdAt,
           },
-          token,
         },
         201,
       );

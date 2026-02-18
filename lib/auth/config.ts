@@ -1,10 +1,20 @@
 import { SignJWT, jwtVerify, JWTPayload as JoseJWTPayload } from "jose";
 import { cookies } from "next/headers";
 
-const secretKey =
-  process.env.JWT_SECRET ||
-  "your-super-secret-key-change-in-production-min-32-chars";
-const key = new TextEncoder().encode(secretKey);
+function getSecretKey(): Uint8Array {
+  const secretKey = process.env.JWT_SECRET;
+  if (!secretKey) {
+    throw new Error(
+      "JWT_SECRET environment variable is required. Please set it in your .env file."
+    );
+  }
+  if (secretKey.length < 32) {
+    throw new Error(
+      "JWT_SECRET must be at least 32 characters long for security."
+    );
+  }
+  return new TextEncoder().encode(secretKey);
+}
 
 export interface JWTPayload extends JoseJWTPayload {
   userId: string;
@@ -18,6 +28,7 @@ export async function encrypt(payload: {
   email?: string;
   phone?: string;
 }): Promise<string> {
+  const key = getSecretKey();
   return await new SignJWT(payload as JWTPayload)
     .setProtectedHeader({ alg: "HS256" })
     .setIssuedAt()
@@ -28,6 +39,7 @@ export async function encrypt(payload: {
 // 验证 JWT token
 export async function decrypt(token: string): Promise<JWTPayload | null> {
   try {
+    const key = getSecretKey();
     const { payload } = await jwtVerify(token, key, {
       algorithms: ["HS256"],
     });
